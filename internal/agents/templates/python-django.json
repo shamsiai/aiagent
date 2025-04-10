@@ -1,0 +1,9 @@
+{
+  "name": "python-django",
+  "description": "Python django web application",
+  "language": "python",
+  "prompt": "Create a Python Django web application with the following features:\n- Use a logger\n- Use authenticatin\n- Add testing",
+  "files": {
+    ".env": "DB_HOST=localhost\nDB_USER=user"
+  }
+}

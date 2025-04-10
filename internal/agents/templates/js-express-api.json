@@ -1,0 +1,7 @@
+{
+  "name": "js-express-api",
+  "description": "JavaScript Express API with structured routes",
+  "language": "javascript",
+  "prompt": "Create a Node.js Express API with the following features:\n- Logging\n- Error handling middleware\n- Environment-based configuration",
+  "files": {}
+}

@@ -1,0 +1,7 @@
+{
+  "name": "python-flask",
+  "description": "Python Flask web application",
+  "language": "python",
+  "prompt": "Create a Python Flask web application with the following features:\n- Blueprint-based architecture\n- SQLAlchemy for database access\n- Form validation\n- Environment-based configuration\n- Error handling",
+  "files": {}
+}

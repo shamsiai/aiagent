@@ -1,0 +1,7 @@
+{
+  "name": "java-spring",
+  "description": "Java Spring Boot application with layered architecture",
+  "language": "java",
+  "prompt": "Create a Spring Boot application with the following features:\n- Controller, Service, Repository architecture\n- Spring Data JPA for database access\n- Exception handling\n- Spring Security configuration\n- Validation using Bean Validation",
+  "files": {}
+}
