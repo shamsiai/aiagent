@@ -1,4 +1,4 @@
-module github.com/joefazee/ai-agent-maker
+module github.com/shamsiai/aiagent
 
 go 1.24.1
 

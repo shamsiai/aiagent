@@ -37,7 +37,7 @@ type PromptTemplate struct {
 }
 
 type Agent struct {
-	openAI           *OpenAPI
+	apiClient        APIClient
 	outputDir        string
 	basePackage      string
 	taskQueue        chan FileTask
@@ -61,7 +61,7 @@ var (
 type ProgressCallback func(eventType, message, file string)
 
 func NewAgent(ctx context.Context,
-	openAI *OpenAPI,
+	apiClient APIClient,
 	outputDir string,
 	basePackage string,
 	templateName string,
@@ -70,7 +70,7 @@ func NewAgent(ctx context.Context,
 	ctx, cancel := context.WithCancel(ctx)
 
 	agent := &Agent{
-		openAI:       openAI,
+		apiClient:    apiClient,
 		outputDir:    outputDir,
 		basePackage:  basePackage,
 		taskQueue:    make(chan FileTask, 100),
@@ -92,7 +92,7 @@ func NewAgent(ctx context.Context,
 }
 
 func NewAgentWithCallback(ctx context.Context,
-	openAPI *OpenAPI,
+	apiClient APIClient,
 	outputDir,
 	basePackage,
 	templateName,
@@ -416,13 +416,13 @@ func (a *Agent) GenerateCode(prompt string) error {
 
 	formattedSystemPrompt := buf.String()
 
-	res, err := a.openAI.Query(formattedSystemPrompt, prompt)
+	responseText, err := a.apiClient.Query(formattedSystemPrompt, prompt)
 	if err != nil {
-		return fmt.Errorf("error querying OpenAI: %w", err)
+		return fmt.Errorf("error querying API: %w", err)
 	}
 
-	// do something with OpenAI response
-	if err = a.ParseCode(res.Choices[0].Message.Content); err != nil {
+	// Parse the generated code
+	if err = a.ParseCode(responseText); err != nil {
 		return fmt.Errorf("error parsing code: %w", err)
 	}
 

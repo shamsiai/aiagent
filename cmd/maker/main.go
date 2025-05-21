@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/joefazee/ai-agent-maker/internal/agents"
+	"github.com/shamsiai/aiagent/internal/agents"
 )
 
 func main() {

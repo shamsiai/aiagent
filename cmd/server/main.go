@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/joefazee/ai-agent-maker/internal/server"
+	"github.com/shamsiai/aiagent/internal/server"
 )
 
 func main() {

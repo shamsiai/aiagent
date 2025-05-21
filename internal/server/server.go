@@ -14,7 +14,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
-	"github.com/joefazee/ai-agent-maker/internal/agents"
+	"github.com/shamsiai/aiagent/internal/agents"
 )
 
 type Server struct {
@@ -42,13 +42,17 @@ func (c *WebSocketClient) WriteJSON(v interface{}) error {
 }
 
 type ProjectRequest struct {
-	Prompt      string `json:"prompt"`
-	Language    string `json:"language"`
-	Template    string `json:"template"`
-	BasePackage string `json:"basePackage"`
-	WorkerCount int    `json:"workerCount"`
-	Model       string `json:"model"`
-	ProjectName string `json:"projectName"`
+	Prompt         string `json:"prompt"`
+	Language       string `json:"language"`
+	Template       string `json:"template"`
+	BasePackage    string `json:"basePackage"`
+	WorkerCount    int    `json:"workerCount"`
+	Model          string `json:"model"`
+	ProjectName    string `json:"projectName"`
+	APIProvider    string `json:"apiProvider"`
+	APIKey         string `json:"apiKey"`
+	UseCustomBaseURL bool   `json:"useCustomBaseUrl"`
+	BaseURL        string `json:"baseUrl"`
 }
 
 type ProgressEvent struct {
@@ -140,7 +144,40 @@ func (s *Server) HandleGenerate(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	client := agents.NewOpenAI(ctx, s.openAIKey, req.Model, httpClient)
+	// Use the API key from the request if provided, otherwise use the server's default key
+	apiKey := req.APIKey
+	if apiKey == "" {
+		apiKey = s.openAIKey
+	}
+	
+	// Log API configuration for debugging
+	log.Printf("API Configuration - Provider: %s, Model: %s, UseCustomBaseURL: %v, BaseURL: %s, API Key Length: %d",
+		req.APIProvider, req.Model, req.UseCustomBaseURL, req.BaseURL, len(apiKey))
+	
+	// Log whether we're using the default key or the user-provided key
+	if apiKey == s.openAIKey {
+		log.Printf("Using default server API key")
+	} else {
+		log.Printf("Using user-provided API key")
+	}
+	
+	// Create the appropriate API client based on the provider
+	apiClient, err := agents.NewAPIClient(
+		ctx, 
+		req.APIProvider, 
+		apiKey, 
+		req.Model, 
+		req.UseCustomBaseURL, 
+		req.BaseURL, 
+		httpClient,
+	)
+	if err != nil {
+		sendEvent(wsClient, ProgressEvent{
+			Type:  "error",
+			Error: "Failed to create API client: " + err.Error(),
+		})
+		return
+	}
 
 	progressCallback := func(eventType, message, file string) {
 		sendEvent(wsClient, ProgressEvent{
@@ -152,7 +189,7 @@ func (s *Server) HandleGenerate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	agent, err := agents.NewAgentWithCallback(
-		ctx, client, projectDir, req.BasePackage,
+		ctx, apiClient, projectDir, req.BasePackage,
 		req.Template, req.Language, req.WorkerCount,
 		progressCallback,
 	)
@@ -172,7 +209,9 @@ func (s *Server) HandleGenerate(w http.ResponseWriter, r *http.Request) {
 		Message: "Starting code generation...",
 	})
 
+	log.Printf("Starting code generation with prompt: %s", req.Prompt)
 	if err := agent.GenerateCode(req.Prompt); err != nil {
+		log.Printf("Code generation failed: %v", err)
 		sendEvent(wsClient, ProgressEvent{
 			Type:  "error",
 			Error: "Code generation failed: " + err.Error(),
@@ -180,6 +219,7 @@ func (s *Server) HandleGenerate(w http.ResponseWriter, r *http.Request) {
 		agent.Stop()
 		return
 	}
+	log.Printf("Code generation completed successfully")
 
 	time.Sleep(1 * time.Second)
 	agent.Stop()
